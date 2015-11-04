@@ -1,6 +1,9 @@
 #ifndef _CHESS_H_
 #define _CHESS_H_
 
+#define WHITES_SIDE 2
+#define BLACKS_SIDE 1
+#define DELIMITERS " /"
 #define W_ROOK 'R'
 #define W_KNIGHT 'N'
 #define W_BISHOP 'B'
@@ -16,13 +19,17 @@
 #define WHITES_TURN 'w'
 #define BLACKS_TURN 'b'
 
-#include "item.h"
+#include "chess_move.h"
 #include "queue.h"
+#include "my_strings.h"
 
 typedef struct piece PIECE;
 typedef struct table TABLE;
 
+TABLE *create_table(void);
 int read_table(FILE*, TABLE*);
+int delete_table(TABLE**);
 
+int print_table(TABLE*);
 
 #endif
