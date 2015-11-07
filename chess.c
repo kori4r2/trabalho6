@@ -2,11 +2,22 @@
 
 typedef struct piece{
 	char name;
+	int priority;
 	int rank;
 	char file;
 	int side;
-	void (*move)(TABLE*, QUEUE*);
+	void (*move)(TABLE*, QUEUE*, PIECE*);
 }PIECE;
+
+typedef struct node{
+	PIECE *piece;
+	struct node *next;
+}AUX_NODE;
+
+struct list{
+	struct node *first;
+	struct node *last;
+};
 
 typedef struct table{
 	PIECE ***grid;
@@ -17,22 +28,23 @@ typedef struct table{
 	int cur_turn;
 }TABLE;
 
-void move_rook(TABLE *table, QUEUE *queue){
+//PIECE related functions------------------------------------
+void move_rook(TABLE *table, QUEUE *queue, PIECE *piece){
 
 }
-void move_knight(TABLE *table, QUEUE *queue){
+void move_knight(TABLE *table, QUEUE *queue, PIECE *piece){
 
 }
-void move_bishop(TABLE *table, QUEUE *queue){
+void move_bishop(TABLE *table, QUEUE *queue, PIECE *piece){
 
 }
-void move_queen(TABLE *table, QUEUE *queue){
+void move_queen(TABLE *table, QUEUE *queue, PIECE *piece){
 
 }
-void move_king(TABLE *table, QUEUE *queue){
+void move_king(TABLE *table, QUEUE *queue, PIECE *piece){
 
 }
-void move_pawn(TABLE *table, QUEUE *queue){
+void move_pawn(TABLE *table, QUEUE *queue, PIECE *piece){
 
 }
 
@@ -47,31 +59,147 @@ PIECE *create_piece(char name, int rank, char file){
 			case W_ROOK:
 			case B_ROOK:
 				piece->move = &move_rook;
+				piece->priority = 3;
 				break;
 			case W_KNIGHT:
 			case B_KNIGHT:
 				piece->move = &move_knight;
+				piece->priority = 1;
 				break;
 			case W_BISHOP:
 			case B_BISHOP:
 				piece->move = &move_bishop;
+				piece->priority = 2;
 				break;
 			case W_QUEEN:
 			case B_QUEEN:
 				piece->move = &move_queen;
+				piece->priority = 4;
 				break;
 			case W_KING:
 			case B_KING:
 				piece->move = &move_king;
+				piece->priority = 5;
 				break;
 			case W_PAWN:
 			case B_PAWN:
 				piece->move = &move_pawn;
+				piece->priority = 0;
 				break;
 		}
 	}
 
 	return piece;
+}
+
+int compare_priority(PIECE *piece1, PIECE *piece2){
+	// Verifica se foram passadas peças válidas
+	if(piece1 != NULL && piece2 != NULL){
+		// Compara as prioridades das peças
+		if(piece1->priority < piece2->priority) return -1;
+		else if(piece1->priority > piece2->priority) return 1;
+		else{
+			// A peça na coluna(file) de menor valor tem maior prioridade
+			if(piece1->file < piece2->file) return -1;
+			else if(piece1->file > piece2->file) return 1;
+			else{
+				// A peça na linha(rank) de menor valor tem maior prioridade
+				if(piece1->rank < piece2->rank) return -1;
+				else return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+AUX_NODE *create_aux_node(PIECE *piece){
+	AUX_NODE *node = NULL;
+	if(piece != NULL){
+		node = (AUX_NODE*)malloc(sizeof(AUX_NODE));
+		if(node != NULL){
+			node->piece = piece;
+			node->next = node;
+		}
+	}
+	return node;
+}
+
+int insert_list(PIECE_LIST *list, PIECE *piece){
+	if(list != NULL && piece != NULL){
+		AUX_NODE *new_node;
+		if(list->first == NULL) list->last = list->first = create_aux_node(piece);
+		else if(compare_priority(piece, list->first->piece) < 0){
+			new_node = create_aux_node(piece);
+			new_node->next = list->first;
+			list->last->next = new_node;
+			list->first = new_node;
+		}else{
+			AUX_NODE *prev_node = list->first;
+			while(compare_priority(piece, prev_node->next->piece) > 0 && prev_node->next != list->first)
+				prev_node = prev_node->next;
+			new_node = create_aux_node(piece);
+			new_node->next = prev_node->next;
+			prev_node->next = new_node;
+			if(new_node->next == list->first) list->last = new_node;
+		}
+		return 0;
+	}
+	return 1;
+}
+
+PIECE_LIST *create_piece_list(TABLE *table){
+	PIECE_LIST *list = NULL;
+	if(table != NULL){
+		list = (PIECE_LIST*)malloc(sizeof(PIECE_LIST));
+		if(list != NULL){
+			int i, j, side_turn;
+			side_turn = (table->turn == WHITES_TURN ? WHITES_SIDE : BLACKS_SIDE);
+
+			list->first = NULL;
+			list->last = NULL;
+			for(i = 0; i < 8; i++){
+				for(j = 0; j < 8; j++){
+					// Se existir uma peça e for o turno dela atualmente
+					if(table->grid[i][j] != NULL && table->grid[i][j]->side == side_turn){
+						// Insere a peça na lista de maneira ordenada
+						insert_list(list, table->grid[i][j]);
+					}
+				}
+			}
+		}
+	}
+	return list;
+}
+
+int delete_list(PIECE_LIST **list){
+	if(list != NULL && *list != NULL){
+		AUX_NODE *aux;
+		while((*list)->first->next != (*list)->first){
+			aux = (*list)->first->next;
+			(*list)->first->next = aux->next;
+			free(aux);
+		}
+		free((*list)->first);
+		free(*list);
+		(*list) = NULL;
+	}
+	return 1;
+}
+
+// auxiliary function
+int print_list(PIECE_LIST *list){
+	if(list != NULL){
+		AUX_NODE *print = list->first;
+		if(print != NULL) printf("||%c||(%d,%c)", print->piece->name, print->piece->rank, print->piece->file);
+		print = print->next;
+		while(print != list->first){
+			printf("->||%c||(%d,%c)", print->piece->name, print->piece->rank, print->piece->file);
+			print = print->next;
+		}
+		printf("\n");
+		return 0;
+	}
+	return 1;
 }
 
 void delete_piece(PIECE **piece){
@@ -81,6 +209,7 @@ void delete_piece(PIECE **piece){
 	}
 }
 
+// TABLE related functions--------------------------------------------------------
 TABLE *create_table(void){
 	int i, j;
 	int error = 0;
@@ -193,6 +322,7 @@ int delete_table(TABLE **table){
 	return 1;
 }
 
+// Auxiliary function
 int print_table(TABLE *table){
 	if(table != NULL){
 		int i, j;

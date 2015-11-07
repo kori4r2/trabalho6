@@ -3,8 +3,6 @@
 #include "my_strings.h"
 #include "chess.h"
 
-
-
 int main(int argc, char *argv[]){
 
 	int aux;
@@ -13,6 +11,10 @@ int main(int argc, char *argv[]){
 	printf("||read_table() return value = %d||\n", aux);
 	aux = print_table(table);
 	printf("||print_table() return value = %d||\n", aux);
+	printf("\n list of pieces read:\n");
+	PIECE_LIST *list = create_piece_list(table);
+	print_list(list);
+	delete_list(&list);
 	delete_table(&table);
 
 	return 0;

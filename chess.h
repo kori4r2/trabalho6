@@ -24,8 +24,13 @@
 #include "my_strings.h"
 
 typedef struct piece PIECE;
+typedef struct list PIECE_LIST;
 typedef struct table TABLE;
 
+PIECE_LIST *create_piece_list(TABLE*);
+int delete_list(PIECE_LIST**);
+// temporary
+int print_list(PIECE_LIST*);
 TABLE *create_table(void);
 int read_table(FILE*, TABLE*);
 int delete_table(TABLE**);
