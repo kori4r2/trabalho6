@@ -1,32 +1,39 @@
 #include "chess_move.h"
 
 struct move{
+	char piece;
 	int origin_rank;
 	int origin_file;
 	int destiny_rank;
 	int destiny_file;
 	unsigned char capture;
 	unsigned char repeat;
+	char special;
 };
 
-CHESS_MOVE *create_move(int origin_rank, char origin_file, int destiny_rank, char destiny_file, unsigned char capture){
+CHESS_MOVE *create_move(char piece, int origin_rank, char origin_file, int destiny_rank, char destiny_file, unsigned char capture, char special){
 	CHESS_MOVE *new_move = malloc(sizeof(CHESS_MOVE));
 	if(new_move != NULL){
+		new_move->piece = toupper(piece);
 		new_move->origin_rank = origin_rank;
 		new_move->origin_file = origin_file;
 		new_move->destiny_rank = destiny_rank;
 		new_move->destiny_file = destiny_file;
 		new_move->capture = capture;
+		new_move->special = special;
 		new_move->repeat = 0;
 	}
 
 	return new_move;
 }
 
+// to do
 int compare_moves(CHESS_MOVE *move1, CHESS_MOVE *move2){
 	if(move1 != NULL && move2 != NULL){
-		// ???????????
-		return 0;
+		int result = 0;
+		if(move1->destiny_rank == move2->destiny_rank && move1->destiny_file == move2->destiny_file){
+		}
+		return result;
 	}
 	return INT_MIN;
 }
@@ -40,13 +47,6 @@ int swap_moves(CHESS_MOVE **move1, CHESS_MOVE **move2){
 		return 1;
 	}
 	return 0;
-}
-
-int get_move_id(CHESS_MOVE *move){
-	if(move != NULL){
-		return move->origin_rank;
-	}
-	return INT_MIN;
 }
 
 int delete_move(CHESS_MOVE **move){
@@ -63,6 +63,24 @@ int delete_move(CHESS_MOVE **move){
 
 void print_move(CHESS_MOVE *move){
 	if(move != NULL){
-		printf("||id = %4d ; value = %c||\n", move->origin_rank, move->origin_file);
+		int i = 0;
+		char *output = (char*)malloc(sizeof(char) * 8);
+		if(move->piece != 'P'){
+			output[i++] = move->piece;
+			if(move->repeat == 1 || move->repeat == 3) output[i++] = move->origin_file;
+			if(move->repeat == 2 || move->repeat == 3) output[i++] = move->origin_rank + '0';
+			if(move->capture) output[i++] = 'x';
+			output[i++] = move->destiny_file;
+			output[i++] = move->destiny_rank + '0';
+			// Checa se o movimento a ser realizado é a promoção de um peão
+			// E caso seja imprime para qual peça está sendo promovido
+			if(move->special != 'E') output[i++] = move->special;
+			output[i] = '\0';
+			printf("%s", output);
+			if(move->special == 'E') printf("e.p.");
+			printf("\n");
+			free(output);
+		}
 	}
+
 }

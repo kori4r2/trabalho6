@@ -1,4 +1,5 @@
 #include "chess.h"
+
 void move_rook(TABLE*, QUEUE*, PIECE*);
 void move_knight(TABLE*, QUEUE*, PIECE*);
 void move_bishop(TABLE*, QUEUE*, PIECE*);
@@ -15,14 +16,14 @@ typedef struct piece{
 	void (*move)(TABLE*, QUEUE*, PIECE*);
 }PIECE;
 
-typedef struct node{
+typedef struct aux_node{
 	PIECE *piece;
-	struct node *next;
+	struct aux_node *next;
 }AUX_NODE;
 
 struct list{
-	struct node *first;
-	struct node *last;
+	struct aux_node *first;
+	struct aux_node *last;
 };
 
 typedef struct table{
@@ -232,13 +233,259 @@ int is_check(TABLE *table){
 }
 
 void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
+	int i, enemy_side;
+	PIECE *aux;
+	enemy_side = (rook->side == WHITES_SIDE)? BLACKS_SIDE : WHITES_SIDE;
+
+	// Move para a posição disponível mais distante para a esquerda na coluna
+	i = 1;
+	while(rook->file-i > 'a' && table->grid[8-rook->rank][(rook->file-i)-'a'] == NULL) i++;
+	// Checa se é uma posição válida, atribuindo o valor da posição a aux se necessário
+	aux = ((rook->file-i >= 'a') ? table->grid[8-rook->rank][(rook->file-i)-'a'] : NULL);
+	// Checa se encontrou uma peça inimiga
+	if(aux != NULL && aux->side == enemy_side){
+		// Verifica se capturar a peça deixa o rei em cheque
+		table->grid[8-rook->rank][(rook->file-i)-'a'] = rook;
+		table->grid[8-rook->rank][rook->file-'a'] = NULL;
+		// Caso não coloque em cheque, enfilera o movimento
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank, rook->file-i, 1, 0));
+		// Desfaz a jogada
+		table->grid[8-rook->rank][rook->file-'a'] = rook;
+		table->grid[8-rook->rank][(rook->file-i)-'a'] = aux;
+	}
+	// Se possível
+	if(rook->file-i >= 'a'){
+		while(i > 1){
+			// Volta todas as casas até a casa imediatamente do lado
+			i--;
+			// Enfileira as jogadas possíveis
+			table->grid[8-rook->rank][(rook->file-i)-'a'] = rook;
+			table->grid[8-rook->rank][rook->file-'a'] = NULL;
+			if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank, rook->file-i, 0, 0));
+			table->grid[8-rook->rank][rook->file-'a'] = rook;
+			table->grid[8-rook->rank][(rook->file-i)-'a'] = NULL;
+		}
+	}
+
 	
+	// Faz o mesmo que foi descrito acima para as casa abaixo da torre
+	i = 1;
+	while(rook->rank-i > 1 && table->grid[8-(rook->rank-i)][rook->file-'a'] == NULL) i++;
+	aux = ((rook->rank-i >= 1) ? table->grid[8-(rook->rank-i)][rook->file-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side){
+		table->grid[8-(rook->rank-i)][rook->file-'a'] = rook;
+		table->grid[8-rook->rank][rook->file-'a'] = NULL;
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank-i, rook->file, 1, 0));
+		table->grid[8-rook->rank][rook->file-'a'] = rook;
+		table->grid[8-(rook->rank-i)][rook->file-'a'] = aux;
+	}
+	if(rook->rank-i >= 1){
+		while(i > 1){
+			i--;
+			table->grid[8-(rook->rank-i)][rook->file-'a'] = rook;
+			table->grid[8-rook->rank][rook->file-'a'] = NULL;
+			if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank-i, rook->file, 0, 0));
+			table->grid[8-rook->rank][rook->file-'a'] = rook;
+			table->grid[8-(rook->rank-i)][rook->file-'a'] = NULL;
+		}
+	}
+
+	//Faz o mesmo para as casas acima da torre
+	i = 1;
+	// Nesse caso, porém, enfileira os movimentos à medida que sobe
+	while(rook->rank+i <= 8 && table->grid[8-(rook->rank+i)][rook->file-'a'] == NULL){
+		table->grid[8-(rook->rank+i)][rook->file-'a'] = rook;
+		table->grid[8-rook->rank][rook->file-'a'] = NULL;
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank+i, rook->file, 0, 0));
+		table->grid[8-rook->rank][rook->file-'a'] = rook;
+		table->grid[8-(rook->rank+i)][rook->file-'a'] = NULL;
+		i++;
+	}
+	aux = ((rook->rank+i <= 8) ? table->grid[8-(rook->rank+i)][rook->file-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side){
+		table->grid[8-(rook->rank+i)][rook->file-'a'] = rook;
+		table->grid[8-rook->rank][rook->file-'a'] = NULL;
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank+i, rook->file, 1, 0));
+		table->grid[8-rook->rank][rook->file-'a'] = rook;
+		table->grid[8-(rook->rank+i)][rook->file-'a'] = aux;
+	}
+
+	//Faz o mesmo para as casas à direita da torre
+	i = 1;
+	// Também enfileirando os movimentos à medida que se distancia da torre
+	while(rook->file+i <= 'h' && table->grid[8-rook->rank][(rook->file+i)-'a'] == NULL){
+		table->grid[8-rook->rank][(rook->file+i)-'a'] = rook;
+		table->grid[8-rook->rank][rook->file-'a'] = NULL;
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file+i, rook->rank, rook->file, 0, 0));
+		table->grid[8-rook->rank][rook->file-'a'] = rook;
+		table->grid[8-rook->rank][(rook->file+i)-'a'] = NULL;
+		i++;
+	}
+	aux = ((rook->file+i <= 'h') ? table->grid[8-rook->rank][(rook->file+i)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side){
+		table->grid[8-rook->rank][(rook->file+i)-'a'] = rook;
+		table->grid[8-rook->rank][rook->file-'a'] = NULL;
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank+i, rook->file, 1, 0));
+		table->grid[8-rook->rank][rook->file-'a'] = rook;
+		table->grid[8-rook->rank][(rook->file+i)-'a'] = aux;
+	}
 }
+
 void move_knight(TABLE *table, QUEUE *queue, PIECE *knight){
 
 }
-void move_bishop(TABLE *table, QUEUE *queue, PIECE *bishop){
 
+void move_bishop(TABLE *table, QUEUE *queue, PIECE *bishop){
+	int i, up, down, enemy_side, repeat, flag1, flag2, capture;
+	PIECE *aux1, *aux2;
+	enemy_side = (bishop->side == WHITES_SIDE)? BLACKS_SIDE : WHITES_SIDE;
+
+	// Move para as posições disponíveis mais distante para a esquerda e para cima ou para baixo
+	i = 1;
+	up = 1;
+	down = 1;
+	repeat = 1;
+	// Enquanto estiver dentro dos limites do tabuleiro e alguma das diagonais tiver avançado
+	while(bishop->file-i > 'a' && repeat){
+		repeat = 0;
+		// Incrementa a variável necessária para o movimento para cima
+		if(bishop->rank + up < 8 && table->grid[8-(bishop->rank+up)][bishop->file-i-'a'] == NULL){
+			up++;
+			repeat = 1;
+		}
+		// Ou para baixo
+		if(bishop->rank - down > 1 && table->grid[8-(bishop->rank - down)][bishop->file-i-'a'] == NULL){
+			down++;
+			repeat = 1;
+		}
+		i++;
+	}
+	// Checa se é uma posição válida, atribuindo o valor da posição a aux se necessário
+	aux1 = ((bishop->file - up >= 'a' && bishop->rank + up <= 8) ? table->grid[8-(bishop->rank+up)][bishop->file-i-'a'] : NULL);
+	aux2 = ((bishop->file - down >= 'a' && bishop->rank - down >= 1) ? table->grid[8-(bishop->rank-down)][bishop->file-i-'a'] : NULL);
+
+	flag1 = (aux1 != NULL && aux1->side == enemy_side)? 1 : 0;
+	flag2 = (aux2 != NULL && aux2->side == enemy_side)? 1 : 0;
+	if(aux1 != NULL && !flag1) up--;
+	if(aux2 != NULL && !flag2) down--;
+
+	// Se possível
+	while(bishop->file - i >= 'a' && bishop->file - i <= 'h' && i > 0){
+
+		// Se up for menor do que i, deve ser impresso o movimento da diagonal superior
+		if(up >= i && bishop->file-up >= 'a' && bishop->rank+up <= 8){
+			// flag1 indica se é necessário checar captura de peças inimigas
+			if(flag1){
+				// Verifica se capturar a peça deixa o rei em cheque
+				table->grid[8-(bishop->rank+up)][bishop->file-up-'a'] = bishop;
+				table->grid[8-bishop->rank][bishop->file-'a'] = NULL;
+				// Caso não coloque em cheque, enfilera o movimento
+				if(!is_check(table))
+					enqueue(queue, create_move(bishop->name, bishop->rank, bishop->file, bishop->rank+up, bishop->file-up, 1, 0));
+				// Desfaz a jogada
+				table->grid[8-bishop->rank][bishop->file-'a'] = bishop;
+				table->grid[8-(bishop->rank+up)][bishop->file-up-'a'] = aux1;
+				flag1 = 0;
+			}else{
+				table->grid[8-(bishop->rank+up)][bishop->file-up-'a'] = bishop;
+				table->grid[8-bishop->rank][bishop->file-'a'] = NULL;
+				if(!is_check(table))
+					enqueue(queue, create_move(bishop->name, bishop->rank, bishop->file, bishop->rank+up, bishop->file-up, 0, 0));
+				table->grid[8-bishop->rank][bishop->file-'a'] = bishop;
+				table->grid[8-(bishop->rank+up)][bishop->file-up-'a'] = NULL;
+			}
+			up--;
+		}
+		if(down > up && bishop->file-down >= 'a' && bishop->rank-down >= 1){
+			// flag1 indica se é necessário checar captura de peças inimigas
+			if(flag2){
+				// Verifica se capturar a peça deixa o rei em cheque
+				table->grid[8-(bishop->rank-down)][bishop->file-down-'a'] = bishop;
+				table->grid[8-bishop->rank][bishop->file-'a'] = NULL;
+				// Caso não coloque em cheque, enfilera o movimento
+				if(!is_check(table))
+					enqueue(queue, create_move(bishop->name, bishop->rank, bishop->file, bishop->rank-down, bishop->file-down, 1, 0));
+				// Desfaz a jogada
+				table->grid[8-bishop->rank][bishop->file-'a'] = bishop;
+				table->grid[8-(bishop->rank-down)][bishop->file-down-'a'] = aux2;
+				flag2 = 0;
+			}else{
+				table->grid[8-(bishop->rank-down)][bishop->file-down-'a'] = bishop;
+				table->grid[8-bishop->rank][bishop->file-'a'] = NULL;
+				if(!is_check(table))
+					enqueue(queue, create_move(bishop->name, bishop->rank, bishop->file, bishop->rank-down, bishop->file-down, 0, 0));
+				table->grid[8-bishop->rank][bishop->file-'a'] = bishop;
+				table->grid[8-(bishop->rank-down)][bishop->file-down-'a'] = NULL;
+			}
+			down--;
+		}
+		i--;
+	}
+
+
+	// A seguir checa todas as posições para a direita
+	i = 1;
+	up = 1;
+	down = 1;
+	repeat = 1;
+	aux1 = NULL;
+	aux2 = NULL;
+	flag1 = flag2 = 1;
+	// Enquanto estiver dentro dos limites do tabuleiro e alguma das diagonais tiver avançado
+	while(bishop->file+i <= 'h' && repeat){
+		repeat = 0;
+		// Se aux1 ainda não tiver encontrado um valor anteriormente, atualiza com a posição atual
+		if(!aux1)
+			aux1 = ((bishop->file + up <= 'h' && bishop->rank + up <= 8) ? table->grid[8-(bishop->rank+up)][bishop->file+up-'a'] : NULL);
+		// Caso seja necessário e seja uma posição válida
+		if(flag1 && bishop->rank + up <= 8){
+			// Verifica se o movimento é uma captura de peça
+			capture = (aux1 != NULL && aux1->side == enemy_side)? 1 : 0;
+			// Caso haja uma peça aliada na posição avaliada, muda a flag e não faz mais nada
+			if(aux1 != NULL && !capture) flag1 = 0;
+			else{
+				// Verifica se realizar o movimento deixa o rei em cheque
+				table->grid[8-(bishop->rank+up)][bishop->file+up-'a'] = bishop;
+				table->grid[8-bishop->rank][bishop->file-'a'] = NULL;
+				// Caso não coloque em cheque, enfilera o movimento
+				if(!is_check(table))
+					enqueue(queue, create_move(bishop->name, bishop->rank, bishop->file, bishop->rank+up, bishop->file+up, capture, 0));
+				// Desfaz a jogada
+				table->grid[8-bishop->rank][bishop->file-'a'] = bishop;
+				table->grid[8-(bishop->rank+up)][bishop->file+up-'a'] = aux1;
+				up++;
+				if(aux1 != NULL) flag1 = 0;
+				repeat = 1;
+			}
+		}
+
+		// Se aux2 ainda não tiver encontrado um valor anteriormente, atualiza com a posição atual
+		if(!aux2)
+			aux2 = ((bishop->file+down <= 'h' && bishop->rank-down >= 1) ? table->grid[8-(bishop->rank-down)][bishop->file+down-'a'] : NULL);
+		// Caso seja necessário e seja uma posição válida
+		if(flag2 && bishop->rank - down >= 1){
+			// Verifica se o movimento é uma captura de peça
+			capture = (aux2 != NULL && aux2->side == enemy_side)? 1 : 0;
+			// Caso haja uma peça aliada na posição avaliada, muda a flag e não faz mais nada
+			if(aux2 != NULL && !capture) flag2 = 0;
+			else{
+				// Verifica se realizar o movimento deixa o rei em cheque
+				table->grid[8-(bishop->rank-down)][bishop->file+down-'a'] = bishop;
+				table->grid[8-bishop->rank][bishop->file-'a'] = NULL;
+				// Caso não coloque em cheque, enfilera o movimento
+				if(!is_check(table))
+					enqueue(queue, create_move(bishop->name, bishop->rank, bishop->file, bishop->rank-down, bishop->file+down, capture, 0));
+				// Desfaz a jogada
+				table->grid[8-bishop->rank][bishop->file-'a'] = bishop;
+				table->grid[8-(bishop->rank-down)][bishop->file+down-'a'] = aux2;
+				down++;
+				if(aux2 != NULL) flag2 = 0;
+				repeat = 1;
+			}
+		}
+
+		i++;
+	}
 }
 void move_queen(TABLE *table, QUEUE *queue, PIECE *queen){
 
@@ -512,6 +759,17 @@ int read_table(FILE *stream, TABLE *table){
 
 	fprintf(stderr, "read_table(): table is NULL\n");
 	return 1;
+}
+
+void list_moves(TABLE *table, QUEUE *queue, PIECE_LIST *list){
+	AUX_NODE *node = list->first;
+	if(node != NULL){
+		do{
+			node->piece->move(table, queue, node->piece);
+			node = node->next;
+		}while(node != list->first);
+	}
+	print_queue(queue);
 }
 
 int delete_table(TABLE **table){

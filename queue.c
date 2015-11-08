@@ -55,7 +55,8 @@ int empty_queue(QUEUE *queue){
 	else return 1;
 }
 
-int enqueue(QUEUE *queue, NODE *node){
+int enqueue(QUEUE *queue, CHESS_MOVE *move){
+	NODE *node = create_node(move);
 	if(queue != NULL){
 		if(node != NULL){
 			if(empty_queue(queue)) queue->first = node;

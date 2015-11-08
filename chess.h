@@ -31,6 +31,8 @@ PIECE_LIST *create_piece_list(TABLE*);
 int delete_list(PIECE_LIST**);
 // temporary
 int print_list(PIECE_LIST*);
+void list_moves(TABLE*, QUEUE*, PIECE_LIST*);
+//
 TABLE *create_table(void);
 int read_table(FILE*, TABLE*);
 int is_check(TABLE*);

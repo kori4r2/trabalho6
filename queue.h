@@ -12,7 +12,7 @@ NODE *create_node(CHESS_MOVE*);
 int delete_node(NODE**);
 QUEUE *create_queue(void);
 int empty_queue(QUEUE*);
-int enqueue(QUEUE*, NODE*);
+int enqueue(QUEUE*, CHESS_MOVE*);
 int dequeue(QUEUE*);
 NODE *front_queue(QUEUE*);
 int delete_queue(QUEUE**);
