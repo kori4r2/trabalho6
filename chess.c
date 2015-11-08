@@ -171,13 +171,68 @@ int is_check(TABLE *table){
 		if(aux->move == &move_king) check = 1;
 		if(!check && king->side == BLACKS_SIDE && aux->move == &move_pawn) check = 1;
 	}
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	//Checa se há algum cavalo ameaçando o rei
+	i = 2;
+	j = -1;
+	aux = ((king->rank+i <= 8 && king->file+j >= 'a') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	j = 1;
+	aux = ((king->rank+i <= 8 && king->file+j <= 'h') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	i = 1;
+	j = -2;
+	aux = ((king->rank+i <= 8 && king->file+j >= 'a') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	j = 2;
+	aux = ((king->rank+i <= 8 && king->file+j <= 'h') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	i = -1;
+	j = -2;
+	aux = ((king->rank+i > 0 && king->file+j >= 'a') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	j = 2;
+	aux = ((king->rank+i > 0 && king->file+j <= 'h') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	i = -2;
+	j = -1;
+	aux = ((king->rank+i > 0 && king->file+j >= 'a') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	j = 1;
+	aux = ((king->rank+i > 0 && king->file+j <= 'h') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && aux->move == &move_knight) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
 
 
 	return check;
 }
 
 void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
-
+	
 }
 void move_knight(TABLE *table, QUEUE *queue, PIECE *knight){
 
