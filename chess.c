@@ -1,4 +1,10 @@
 #include "chess.h"
+void move_rook(TABLE*, QUEUE*, PIECE*);
+void move_knight(TABLE*, QUEUE*, PIECE*);
+void move_bishop(TABLE*, QUEUE*, PIECE*);
+void move_queen(TABLE*, QUEUE*, PIECE*);
+void move_king(TABLE*, QUEUE*, PIECE*);
+void move_pawn(TABLE*, QUEUE*, PIECE*);
 
 typedef struct piece{
 	char name;
@@ -26,25 +32,166 @@ typedef struct table{
 	char *en_passant;
 	int half_turns;
 	int cur_turn;
+	PIECE *turn_king;
 }TABLE;
 
 //PIECE related functions------------------------------------
-void move_rook(TABLE *table, QUEUE *queue, PIECE *piece){
+int is_check(TABLE *table){
+	int i, j, enemy_side, check = 0;
+	PIECE *king = table->turn_king;
+	PIECE *aux;
+	enemy_side = (king->side == WHITES_SIDE ? BLACKS_SIDE : WHITES_SIDE);
+
+	// Checa se existe uma torre ou uma rainha atacando o rei para cima na coluna
+	i = 1;
+	while(king->rank+i < 8 && table->grid[8-(king->rank+i)][king->file-'a'] == NULL) i++;
+	aux = ((king->rank+i <= 8) ? table->grid[8-(king->rank+i)][king->file-'a'] : NULL);
+	// Checa se encontrou uma peça inimiga
+	if(aux != NULL && aux->side == enemy_side){
+		// Checa se está imediatamente do lado do rei inimigo
+		if(i == 1 && aux->move == &move_king) check = 1;
+		// Caso não esteja, checa se há uma torre ou rainha ameaçando
+		if(!check && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+		// Caso seja encontrado cheque, retorna check para sair da função
+		if(check) return check;
+	}
+
+	// Checa se existe uma torre ou uma rainha atacando o rei para baixo na coluna
+	i = 1;
+	while(king->rank-i > 1 && table->grid[8-(king->rank-i)][king->file-'a'] == NULL) i++;
+	aux = ((king->rank-i >= 1) ? table->grid[8-(king->rank-i)][king->file-'a'] : NULL);
+	// Checa se encontrou uma peça inimigai
+	if(aux != NULL && aux->side == enemy_side){
+		// Checa se está imediatamente do lado do rei inimigo
+		if(i == 1 && aux->move == &move_king) check = 1;
+		// Caso não esteja, checa se há uma torre ou rainha ameaçando
+		if(!check && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+		// Caso seja encontrado cheque, retorna check para sair da função
+		if(check) return check;
+	}
+
+	// Checa se existe uma torre ou uma rainha atacando o rei para a direta na linha
+	i = 1;
+	while(king->file+i < 'h' && table->grid[8-king->rank][(king->file+i)-'a'] == NULL) i++;
+	aux = ((king->file+i <= 'h') ? table->grid[8-king->rank][(king->file+i)-'a'] : NULL);
+	// Checa se encontrou uma peça inimiga
+	if(aux != NULL && aux->side == enemy_side){
+		// Checa se está imediatamente do lado do rei inimigo
+		if(i == 1 && aux->move == &move_king) check = 1;
+		// Caso não esteja, checa se há uma torre ou rainha ameaçando
+		if(!check && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+		// Caso seja encontrado cheque, retorna check para sair da função
+		if(check) return check;
+	}
+
+	// Checa se existe uma torre ou uma rainha atacando o rei para a esquerda na linha
+	i = 1;
+	while(king->file-i > 'a' && table->grid[8-king->rank][(king->file-i)-'a'] == NULL) i++;
+	aux = ((king->file-i >= 'a') ? table->grid[8-king->rank][(king->file-i)-'a'] : NULL);
+	// Checa se encontrou uma peça inimiga
+	if(aux != NULL && aux->side == enemy_side){
+		// Checa se está imediatamente do lado do rei inimigo
+		if(i == 1 && aux->move == &move_king) check = 1;
+		// Caso não esteja, checa se há uma torre ou rainha ameaçando
+		if(!check && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+		// Caso seja encontrado cheque, retorna check para sair da função
+		if(check) return check;
+	}
+
+	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
+	i = 1;
+	while(king->rank+i < 8 && king->file+i < 'h' && table->grid[8-(king->rank+i)][(king->file+i)-'a'] == NULL) i++;
+	aux = ((king->rank+i <= 8 && king->file+i <= 'h') ? table->grid[8-(king->rank+i)][(king->file+i)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
+	i = 1;
+	while(king->rank+i < 8 && king->file-i > 'a' && table->grid[8-(king->rank+i)][(king->file-i)-'a'] == NULL) i++;
+	aux = ((king->rank+i <= 8 && king->file-i >= 'a') ? table->grid[8-(king->rank+i)][(king->file-i)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
+	i = 1;
+	while(king->rank-i > 1 && king->file+i < 'h' && table->grid[8-(king->rank-i)][(king->file+i)-'a'] == NULL) i++;
+	aux = ((king->rank-i >= 1 && king->file+i <= 'h') ? table->grid[8-(king->rank-i)][(king->file+i)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
+	i = 1;
+	while(king->rank-i > 1 && king->file-i > 'a' && table->grid[8-(king->rank-i)][(king->file-i)-'a'] == NULL) i++;
+	aux = ((king->rank-i >= 1 && king->file-i >= 'a') ? table->grid[8-(king->rank-i)][(king->file-i)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	// Checa se a posição acima para a esquerda contém uma ameaça ao rei
+	i = 1;
+	j = -1;
+	aux = ((king->rank+i <= 8 && king->file+j >= 'a') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side){
+		if(aux->move == &move_king) check = 1;
+		if(!check && king->side == WHITES_SIDE && aux->move == &move_pawn) check = 1;
+	}
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	// Checa se a posição acima para a direita contém uma ameaça ao rei
+	i = 1;
+	j = 1;
+	aux = ((king->rank+i <= 8 && king->file+j <= 'h') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side){
+		if(aux->move == &move_king) check = 1;
+		if(!check && king->side == WHITES_SIDE && aux->move == &move_pawn) check = 1;
+	}
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	// Checa se a posição abaixo para a direita contém uma ameaça ao rei
+	i = -1;
+	j = 1;
+	aux = ((king->rank+i > 0 && king->file+j <= 'h') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side){
+		if(aux->move == &move_king) check = 1;
+		if(!check && king->side == BLACKS_SIDE && aux->move == &move_pawn) check = 1;
+	}
+	// Caso seja encontrado cheque, retorna check para sair da função
+	if(check) return check;
+
+	// Checa se a posição abaixo para a esquerda contém uma ameaça ao rei
+	i = -1;
+	j = -1;
+	aux = ((king->rank+i > 0 && king->file+j >= 'a') ? table->grid[8-(king->rank+i)][(king->file+j)-'a'] : NULL);
+	if(aux != NULL && aux->side == enemy_side){
+		if(aux->move == &move_king) check = 1;
+		if(!check && king->side == BLACKS_SIDE && aux->move == &move_pawn) check = 1;
+	}
+
+
+	return check;
+}
+
+void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
 
 }
-void move_knight(TABLE *table, QUEUE *queue, PIECE *piece){
+void move_knight(TABLE *table, QUEUE *queue, PIECE *knight){
 
 }
-void move_bishop(TABLE *table, QUEUE *queue, PIECE *piece){
+void move_bishop(TABLE *table, QUEUE *queue, PIECE *bishop){
 
 }
-void move_queen(TABLE *table, QUEUE *queue, PIECE *piece){
+void move_queen(TABLE *table, QUEUE *queue, PIECE *queen){
 
 }
-void move_king(TABLE *table, QUEUE *queue, PIECE *piece){
+void move_king(TABLE *table, QUEUE *queue, PIECE *king){
 
 }
-void move_pawn(TABLE *table, QUEUE *queue, PIECE *piece){
+void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
 
 }
 
@@ -263,14 +410,14 @@ int read_table(FILE *stream, TABLE *table){
 	if(table != NULL){
 		char *input = my_get_line(stream);
 		char *token;
-		int i, j, k;
+		int i, j, k, turn_side;
 
 		token = strtok(input, DELIMITERS);
 		for(i = 0; i < 8; i++){
 			for(j = 0, k = 0; token[j] != '\0'; j++){
 				if(isdigit(token[j])) k += (token[j] - '0');
 				else{
-					table->grid[7-i][k] = create_piece(token[j], (8-i), ('a'+k));
+					table->grid[i][k] = create_piece(token[j], (8-i), ('a'+k));
 					k++;
 				}
 			}
@@ -291,6 +438,18 @@ int read_table(FILE *stream, TABLE *table){
 		token = strtok(NULL, DELIMITERS);
 
 		table->cur_turn = atoi(token);
+
+		turn_side = (table->turn == WHITES_TURN) ? WHITES_SIDE : BLACKS_SIDE;
+
+		for(i = 0; i < 8; i++){
+			for(j = 0; j < 8; j++){
+				if(table->grid[i][j] != NULL && table->grid[i][j]->move == &move_king && table->grid[i][j]->side == turn_side){
+					table->turn_king = table->grid[i][j];
+					i = 8;
+					j = 8;
+				}
+			}
+		}
 
 		free(input);
 		return 0;
@@ -327,7 +486,7 @@ int print_table(TABLE *table){
 	if(table != NULL){
 		int i, j;
 		if(table->grid != NULL){
-			for(i = 7; i >= 0; i--){
+			for(i = 0; i < 8; i++){
 				for(j = 0; j < 8; j++){
 					if(table->grid[i][j] != NULL) printf("|%c| ", table->grid[i][j]->name);
 					else printf("| | ");
@@ -342,6 +501,7 @@ int print_table(TABLE *table){
 		if(table->en_passant != NULL) printf("en_passant: |%s|\n", table->en_passant);
 		printf("half-turns: %d\n", table->half_turns);
 		printf("current turn: %d\n", table->cur_turn);
+		printf("turn king: side = %d; rank = %d; file = %c\n", table->turn_king->side, table->turn_king->rank, table->turn_king->file);
 
 		return 0;
 	}

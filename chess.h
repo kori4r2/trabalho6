@@ -33,6 +33,7 @@ int delete_list(PIECE_LIST**);
 int print_list(PIECE_LIST*);
 TABLE *create_table(void);
 int read_table(FILE*, TABLE*);
+int is_check(TABLE*);
 int delete_table(TABLE**);
 
 int print_table(TABLE*);
