@@ -883,11 +883,138 @@ void move_queen(TABLE *table, QUEUE *queue, PIECE *queen){
 	}
 
 }
+
 void move_king(TABLE *table, QUEUE *queue, PIECE *king){
 
 }
-void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
 
+void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
+	int enemy_side, start, finish, i, j, mirror, capture, en_passant_rank, flag;
+	char en_passant_file, special;
+	PIECE *aux;
+
+	enemy_side = (pawn->side == WHITES_SIDE)? BLACKS_SIDE : WHITES_SIDE;
+	start = (pawn->side == WHITES_SIDE)? 2 : 7;
+	finish = (pawn->side == WHITES_SIDE)? 8 : 1;
+	// A variável mirror serve para fazer a análise independentemente do lado ao qual o peão pertence
+	mirror = (pawn->side == WHITES_SIDE)? 1 : -1;
+
+	// OBS: CAPTURA EN PASSANT NÃO IMPLEMENTADA!!!!
+	special = 0;
+	if(table->en_passant[0] != '-'){
+		en_passant_file = table->en_passant[0];
+		en_passant_rank = table->en_passant[1]-'0';
+	}else{
+		en_passant_rank = 0;
+		en_passant_file = 'i';
+	}
+
+	// rank = start+(mirror*pawn->rank);
+	// first check = pawn->file-mirror;
+	// Verifica a captura para a casa à esquerda
+	if(pawn->file-mirror >= 1 && pawn->file-mirror <= 8 && pawn->rank+mirror <= 8){
+		aux = table->grid[8-(pawn->rank+mirror)][pawn->file-mirror-'a'];
+		capture = (aux != NULL && aux->side == enemy_side);
+		flag = !(aux != NULL && !capture);
+		if(flag){
+			table->grid[8-(pawn->rank+mirror)][pawn->file-mirror-'a'] = pawn;
+			table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
+			if(!is_check(table)){
+				// Se atingir o final enfileira todas as jogas possíveis
+				if(pawn->rank+mirror == finish){
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file-mirror,
+																capture, 'N'));
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file-mirror,
+																capture, 'B'));
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file-mirror,
+																capture, 'R'));
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file-mirror,
+																capture, 'Q'));
+				}else{
+				// Caso contrário, só há uma jogada possível
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file-mirror,
+																capture, special));
+				}
+			}
+			table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
+			table->grid[8-(pawn->rank+mirror)][pawn->file-mirror] = aux;
+		}
+	}
+
+	// j indica se primeiro deve-se checar o movimento de duas casas ou não. Se j = 1, o movimento de uma casa é checado primeiro
+	j = (mirror > 0)? 1 : 0;
+	for(i = 0; i < 2; i++, j = !j){
+		if(!j && pawn->rank == start){
+			aux = table->grid[8-(pawn->rank+(mirror*2))][pawn->file-'a'];
+			capture = (aux != NULL && aux->side == enemy_side);
+			flag = !(aux != NULL && !capture);
+			if(flag){
+				table->grid[8-(pawn->rank+(mirror*2))][pawn->file-'a'] = pawn;
+				table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
+				if(!is_check(table))
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+(mirror*2), pawn->file,
+																capture, special));
+				table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
+				table->grid[8-(pawn->rank+(mirror*2))][pawn->file-'a'] = aux;
+			}
+		}else if(j && pawn->rank+mirror <= 8){
+			aux = table->grid[8-(pawn->rank+mirror)][pawn->file-'a'];
+			capture = (aux != NULL && aux->side == enemy_side);
+			flag = !(aux != NULL && !capture);
+			if(flag){
+				table->grid[8-(pawn->rank+mirror)][pawn->file-'a'] = pawn;
+				table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
+				if(!is_check(table)){
+					// Se atingir o final enfileira todas as jogas possíveis
+					if(pawn->rank+mirror == finish){
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
+																	capture, 'N'));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
+																	capture, 'B'));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
+																	capture, 'R'));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
+																	capture, 'Q'));
+					}else{
+					// Caso contrário, só há uma jogada possível
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
+																capture, special));
+					}
+				}
+				table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
+				table->grid[8-(pawn->rank+mirror)][pawn->file-'a'] = aux;
+			}	
+		}
+	}
+
+	if(pawn->file+mirror >= 1 && pawn->file+mirror <= 8 && pawn->rank+mirror <= 8){
+		aux = table->grid[pawn->rank+mirror][pawn->file-'a'+mirror];
+		capture = (aux != NULL && aux->side == enemy_side);
+		flag = !(aux != NULL && !capture);
+		if(flag){
+			table->grid[8-(pawn->rank+mirror)][pawn->file-'a'+mirror] = pawn;
+			table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
+			if(!is_check(table)){
+				// Se atingir o final enfileira todas as jogas possíveis
+				if(pawn->rank+mirror == finish){
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file+mirror,
+																capture, 'N'));
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file+mirror,
+																capture, 'B'));
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file+mirror,
+																capture, 'R'));
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file+mirror,
+																capture, 'Q'));
+				}else{
+				// Caso contrário, só há uma jogada possível
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file+mirror,
+																capture, special));
+				}
+			}
+			table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
+			table->grid[8-(pawn->rank+mirror)][pawn->file-'a'+mirror] = aux;
+		}
+	}
 }
 
 PIECE *create_piece(char name, int rank, char file){

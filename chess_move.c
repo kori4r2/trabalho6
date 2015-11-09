@@ -65,22 +65,20 @@ void print_move(CHESS_MOVE *move){
 	if(move != NULL){
 		int i = 0;
 		char *output = (char*)malloc(sizeof(char) * 8);
-		if(move->piece != 'P'){
-			output[i++] = move->piece;
-			if(move->repeat == 1 || move->repeat == 3) output[i++] = move->origin_file;
-			if(move->repeat == 2 || move->repeat == 3) output[i++] = move->origin_rank + '0';
-			if(move->capture) output[i++] = 'x';
-			output[i++] = move->destiny_file;
-			output[i++] = move->destiny_rank + '0';
-			// Checa se o movimento a ser realizado é a promoção de um peão
-			// E caso seja imprime para qual peça está sendo promovido
-			if(move->special != 'E') output[i++] = move->special;
-			output[i] = '\0';
-			printf("%s", output);
-			if(move->special == 'E') printf("e.p.");
-			printf("\n");
-			free(output);
-		}
+		if(move->piece != 'P') output[i++] = move->piece;
+		if(move->repeat == 1 || move->repeat == 3 || move->piece == 'P') output[i++] = move->origin_file;
+		if(move->repeat == 2 || move->repeat == 3) output[i++] = move->origin_rank + '0';
+		if(move->capture) output[i++] = 'x';
+		output[i++] = move->destiny_file;
+		output[i++] = move->destiny_rank + '0';
+		// Checa se o movimento a ser realizado é a promoção de um peão
+		// E caso seja imprime para qual peça está sendo promovido
+		if(move->special != 'E') output[i++] = move->special;
+		output[i] = '\0';
+		printf("%s", output);
+		if(move->special == 'E') printf("e.p.");
+		printf("\n");
+		free(output);
 	}
 
 }
