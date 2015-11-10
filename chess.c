@@ -238,9 +238,9 @@ void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
 	enemy_side = (rook->side == WHITES_SIDE)? BLACKS_SIDE : WHITES_SIDE;
 
 	// Move para a posição disponível mais distante para a esquerda na coluna
-	i = 1;
+	i = 0;
 	// to do (check case6.in)
-	while(rook->file-i >= 'a' && table->grid[8-rook->rank][(rook->file-i)-'a'] == NULL) i++;
+	do{i++;}while(rook->file-i > 'a' && table->grid[8-rook->rank][(rook->file-i)-'a'] == NULL);
 	// Checa se é uma posição válida, atribuindo o valor da posição a aux se necessário
 	aux = ((rook->file-i >= 'a') ? table->grid[8-rook->rank][(rook->file-i)-'a'] : NULL);
 	// Checa se encontrou uma peça inimiga
@@ -254,24 +254,26 @@ void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
 		table->grid[8-rook->rank][rook->file-'a'] = rook;
 		table->grid[8-rook->rank][(rook->file-i)-'a'] = aux;
 	}
+	// Se tiver encontrado uma casa não vazia, decrementa i para indicar que já foi checada
+	if(aux != NULL) i--;
 	// Se possível
 	if(rook->file-i >= 'a'){
-		while(i > 1){
+		while(i > 0){
 			// Volta todas as casas até a casa imediatamente do lado
-			i--;
-			// Enfileira as jogadas possíveis
+			// E enfileira as jogadas possíveis
 			table->grid[8-rook->rank][(rook->file-i)-'a'] = rook;
 			table->grid[8-rook->rank][rook->file-'a'] = NULL;
 			if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank, rook->file-i, 0, 0));
 			table->grid[8-rook->rank][rook->file-'a'] = rook;
 			table->grid[8-rook->rank][(rook->file-i)-'a'] = NULL;
+			i--;
 		}
 	}
 
 	
 	// Faz o mesmo que foi descrito acima para as casa abaixo da torre
-	i = 1;
-	while(rook->rank-i >= 1 && table->grid[8-(rook->rank-i)][rook->file-'a'] == NULL) i++;
+	i = 0;
+	do{i++;}while(rook->rank-i > 1 && table->grid[8-(rook->rank-i)][rook->file-'a'] == NULL);
 	aux = ((rook->rank-i >= 1) ? table->grid[8-(rook->rank-i)][rook->file-'a'] : NULL);
 	if(aux != NULL && aux->side == enemy_side){
 		table->grid[8-(rook->rank-i)][rook->file-'a'] = rook;
@@ -280,14 +282,16 @@ void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
 		table->grid[8-rook->rank][rook->file-'a'] = rook;
 		table->grid[8-(rook->rank-i)][rook->file-'a'] = aux;
 	}
+	// Se tiver encontrado uma casa não vazia, decrementa i para indicar que já foi checada
+	if(aux != NULL) i--;
 	if(rook->rank-i >= 1){
-		while(i > 1){
-			i--;
+		while(i > 0){
 			table->grid[8-(rook->rank-i)][rook->file-'a'] = rook;
 			table->grid[8-rook->rank][rook->file-'a'] = NULL;
 			if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank-i, rook->file, 0, 0));
 			table->grid[8-rook->rank][rook->file-'a'] = rook;
 			table->grid[8-(rook->rank-i)][rook->file-'a'] = NULL;
+			i--;
 		}
 	}
 
@@ -317,7 +321,7 @@ void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
 	while(rook->file+i <= 'h' && table->grid[8-rook->rank][(rook->file+i)-'a'] == NULL){
 		table->grid[8-rook->rank][(rook->file+i)-'a'] = rook;
 		table->grid[8-rook->rank][rook->file-'a'] = NULL;
-		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file+i, rook->rank, rook->file+i, 0, 0));
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank, rook->file+i, 0, 0));
 		table->grid[8-rook->rank][rook->file-'a'] = rook;
 		table->grid[8-rook->rank][(rook->file+i)-'a'] = NULL;
 		i++;
@@ -326,7 +330,7 @@ void move_rook(TABLE *table, QUEUE *queue, PIECE *rook){
 	if(aux != NULL && aux->side == enemy_side){
 		table->grid[8-rook->rank][(rook->file+i)-'a'] = rook;
 		table->grid[8-rook->rank][rook->file-'a'] = NULL;
-		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank+i, rook->file+i, 1, 0));
+		if(!is_check(table)) enqueue(queue, create_move(rook->name, rook->rank, rook->file, rook->rank, rook->file+i, 1, 0));
 		table->grid[8-rook->rank][rook->file-'a'] = rook;
 		table->grid[8-rook->rank][(rook->file+i)-'a'] = aux;
 	}
@@ -750,9 +754,9 @@ void move_queen(TABLE *table, QUEUE *queue, PIECE *queen){
 		i--;
 	}
 
-	// A seguir checa as posições para baixo
-	i = 1;
-	while(queen->rank-i >= 1 && table->grid[8-(queen->rank-i)][queen->file-'a'] == NULL) i++;
+	// A seguir checa as posições para baixo(mesma lógica da torre)
+	i = 0;
+	do{i++;}while(queen->rank-i > 1 && table->grid[8-(queen->rank-i)][queen->file-'a'] == NULL);
 	aux1 = ((queen->rank-i >= 1) ? table->grid[8-(queen->rank-i)][queen->file-'a'] : NULL);
 	if(aux1 != NULL && aux1->side == enemy_side){
 		table->grid[8-(queen->rank-i)][queen->file-'a'] = queen;
@@ -761,14 +765,15 @@ void move_queen(TABLE *table, QUEUE *queue, PIECE *queen){
 		table->grid[8-queen->rank][queen->file-'a'] = queen;
 		table->grid[8-(queen->rank-i)][queen->file-'a'] = aux1;
 	}
+	if(aux1 != NULL) i--;
 	if(queen->rank-i >= 1){
-		while(i > 1){
-			i--;
+		while(i > 0){
 			table->grid[8-(queen->rank-i)][queen->file-'a'] = queen;
 			table->grid[8-queen->rank][queen->file-'a'] = NULL;
 			if(!is_check(table)) enqueue(queue, create_move(queen->name, queen->rank, queen->file, queen->rank-i, queen->file, 0, 0));
 			table->grid[8-queen->rank][queen->file-'a'] = queen;
 			table->grid[8-(queen->rank-i)][queen->file-'a'] = NULL;
+			i--;
 		}
 	}
 
