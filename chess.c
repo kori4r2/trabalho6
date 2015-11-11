@@ -101,33 +101,33 @@ int is_check(TABLE *table){
 
 	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
 	i = 1;
-	while(king->rank+i < 8 && king->file+i < 'h' && table->grid[8-(king->rank+i)][(king->file+i)-'a'] == NULL) i++;
+	while(king->rank+i <= 8 && king->file+i <= 'h' && table->grid[8-(king->rank+i)][(king->file+i)-'a'] == NULL) i++;
 	aux = ((king->rank+i <= 8 && king->file+i <= 'h') ? table->grid[8-(king->rank+i)][(king->file+i)-'a'] : NULL);
-	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_bishop || aux->move == &move_queen)) check = 1;
 	// Caso seja encontrado cheque, retorna check para sair da função
 	if(check) return check;
 
 	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
 	i = 1;
-	while(king->rank+i < 8 && king->file-i > 'a' && table->grid[8-(king->rank+i)][(king->file-i)-'a'] == NULL) i++;
+	while(king->rank+i <= 8 && king->file-i >= 'a' && table->grid[8-(king->rank+i)][(king->file-i)-'a'] == NULL) i++;
 	aux = ((king->rank+i <= 8 && king->file-i >= 'a') ? table->grid[8-(king->rank+i)][(king->file-i)-'a'] : NULL);
-	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_bishop || aux->move == &move_queen)) check = 1;
 	// Caso seja encontrado cheque, retorna check para sair da função
 	if(check) return check;
 
 	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
 	i = 1;
-	while(king->rank-i > 1 && king->file+i < 'h' && table->grid[8-(king->rank-i)][(king->file+i)-'a'] == NULL) i++;
+	while(king->rank-i >= 1 && king->file+i <= 'h' && table->grid[8-(king->rank-i)][(king->file+i)-'a'] == NULL) i++;
 	aux = ((king->rank-i >= 1 && king->file+i <= 'h') ? table->grid[8-(king->rank-i)][(king->file+i)-'a'] : NULL);
-	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_bishop || aux->move == &move_queen)) check = 1;
 	// Caso seja encontrado cheque, retorna check para sair da função
 	if(check) return check;
 
 	// Checa se existe um bispo ou uma rainha atacando o rei em uma diagonal
 	i = 1;
-	while(king->rank-i > 1 && king->file-i > 'a' && table->grid[8-(king->rank-i)][(king->file-i)-'a'] == NULL) i++;
+	while(king->rank-i >= 1 && king->file-i >= 'a' && table->grid[8-(king->rank-i)][(king->file-i)-'a'] == NULL) i++;
 	aux = ((king->rank-i >= 1 && king->file-i >= 'a') ? table->grid[8-(king->rank-i)][(king->file-i)-'a'] : NULL);
-	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_rook || aux->move == &move_queen)) check = 1;
+	if(aux != NULL && aux->side == enemy_side && (aux->move == &move_bishop || aux->move == &move_queen)) check = 1;
 	// Caso seja encontrado cheque, retorna check para sair da função
 	if(check) return check;
 
@@ -651,7 +651,7 @@ void move_queen(TABLE *table, QUEUE *queue, PIECE *queen){
 			repeat = 1;
 		}
 		// Para o lado
-		if(queen->rank - side > 1 && table->grid[8-queen->rank][queen->file-side-'a'] == NULL){
+		if(table->grid[8-queen->rank][queen->file-side-'a'] == NULL){
 			side++;
 			repeat = 1;
 		}
@@ -898,12 +898,15 @@ void move_king(TABLE *table, QUEUE *queue, PIECE *king){
 	// Check castlings if necessary
 	cast_queen_flag = (king->side == WHITES_SIDE)? 'Q' : 'q';
 	cast_king_flag = (king->side == WHITES_SIDE)? 'K' : 'k';
+	castling_queen = 0;
+	castling_king = 0;
+	enemy_side = (king->side == WHITES_SIDE)? BLACKS_SIDE : WHITES_SIDE;
 	if(table->castling[0] != '-'){
 		for(i = 0; table->castling[i] != '\0'; i++){
 			if(table->castling[i] == cast_queen_flag){
 				castling_queen = 1;
 				table->grid[8-king->rank][king->file-'a'] = NULL;
-				for(j = 0, flag = 1; j < 3 && flag; j++){
+				for(j = 0, flag = 1; j < 2 && flag; j++){
 					king->file--;
 					if(table->grid[8-king->rank][king->file-'a'] != NULL){
 						castling_queen = 0;
@@ -940,81 +943,90 @@ void move_king(TABLE *table, QUEUE *queue, PIECE *king){
 				table->grid[8-king->rank][king->file-'a'] = king;
 			}
 		}
-	}else{
-		castling_queen = 0;
-		castling_king = 0;
 	}
-	enemy_side = (king->side == WHITES_SIDE)? BLACKS_SIDE : WHITES_SIDE;
 
 	// Castling left
-	if(castling_queen) enqueue(queue, create_move(king->name, king->rank, king->file, king->rank, king->file-3, 0, 0));
+	if(castling_queen) enqueue(queue, create_move(king->name, king->rank, king->file, king->rank, king->file-2, 0, 0));
 
 	// Checa as três posições à esquerda do rei
 	j = -1;
 	if(king->file+j >= 'a'){
+		table->grid[8-king->rank][king->file-'a'] = NULL;
+		king->file += j;
+		king->rank--;
 		for(i = -1; i <= 1; i++){
-			aux = (king->rank+i >= 1 && king->rank+i <= 8)? table->grid[8-(king->rank+i)][king->file+j-'a'] : NULL;
+			aux = (king->rank >= 1 && king->rank <= 8)? table->grid[8-king->rank][king->file-'a'] : NULL;
 			capture = (aux != NULL && aux->side == enemy_side);
 			flag = !(aux != NULL && !capture);
-			if(flag && king->rank+i >= 1 && king->rank+i <= 8){
-				table->grid[8-(king->rank+i)][king->file+j-'a'] = king;
-				table->grid[8-king->rank][king->file-'a'] = NULL;
-				if(!is_check(table))
-					enqueue(queue, create_move(king->name, king->rank, king->file, king->rank+i, king->file+j, capture, 0));
+			if(flag && king->rank >= 1 && king->rank <= 8){
 				table->grid[8-king->rank][king->file-'a'] = king;
-				table->grid[8-(king->rank+i)][king->file+j-'a'] = aux;
+				if(!is_check(table))
+					enqueue(queue, create_move(king->name, king->rank-i, king->file-j, king->rank, king->file, capture, 0));
+				table->grid[8-king->rank][king->file-'a'] = aux;
 			}
+			king->rank++;
 		}
+		king->rank -= 2;
+		king->file -= j;
+		table->grid[8-king->rank][king->file-'a'] = king;
 	}
 
 	// Checa as posições abaixo e acima do rei
-	j = 0;
 	i = -1;
 	if(king->rank+i >= 1){
-		aux = (king->rank+i >= 1)? table->grid[8-(king->rank+i)][king->file+j-'a'] : NULL;
+		table->grid[8-king->rank][king->file-'a'] = NULL;
+		king->rank--;
+		aux = (king->rank >= 1)? table->grid[8-king->rank][king->file-'a'] : NULL;
 		capture = (aux != NULL && aux->side == enemy_side);
 		flag = !(aux != NULL && !capture);
-		if(flag && king->rank+i >= 1){
-			table->grid[8-(king->rank+i)][king->file+j-'a'] = king;
-			table->grid[8-king->rank][king->file-'a'] = NULL;
-			if(!is_check(table))
-				enqueue(queue, create_move(king->name, king->rank, king->file, king->rank+i, king->file+j, capture, 0));
+		if(flag && king->rank >= 1){
 			table->grid[8-king->rank][king->file-'a'] = king;
-			table->grid[8-(king->rank+i)][king->file+j-'a'] = aux;
+			if(!is_check(table))
+				enqueue(queue, create_move(king->name, king->rank-i, king->file, king->rank, king->file, capture, 0));
+			table->grid[8-king->rank][king->file-'a'] = aux;
 		}
+		king->rank++;
+		table->grid[8-king->rank][king->file-'a'] = king;
 	}
 	i = 1;
 	if(king->rank+i <= 8){
-		aux = (king->rank+i <= 8)? table->grid[8-(king->rank+i)][king->file+j-'a'] : NULL;
+		table->grid[8-king->rank][king->file-'a'] = NULL;
+		king->rank++;
+		aux = (king->rank <= 8)? table->grid[8-king->rank][king->file-'a'] : NULL;
 		capture = (aux != NULL && aux->side == enemy_side);
 		flag = !(aux != NULL && !capture);
-		if(flag && king->rank+i <= 8){
-			table->grid[8-(king->rank+i)][king->file+j-'a'] = king;
-			table->grid[8-king->rank][king->file-'a'] = NULL;
-			if(!is_check(table))
-				enqueue(queue, create_move(king->name, king->rank, king->file, king->rank+i, king->file+j, capture, 0));
+		if(flag && king->rank <= 8){
 			table->grid[8-king->rank][king->file-'a'] = king;
-			table->grid[8-(king->rank+i)][king->file+j-'a'] = aux;
+			if(!is_check(table))
+				enqueue(queue, create_move(king->name, king->rank-i, king->file, king->rank, king->file, capture, 0));
+			table->grid[8-king->rank][king->file-'a'] = aux;
 		}
+		king->rank--;
+		table->grid[8-king->rank][king->file-'a'] = king;
 	}
 
 
 	// Checa as três posições À direita do rei
 	j = 1;
 	if(king->file+j <= 'h'){
+		table->grid[8-king->rank][king->file-'a'] = NULL;
+		king->file += j;
+		king->rank--;
 		for(i = -1; i <= 1; i++){
-			aux = (king->rank+i >= 1 && king->rank+i <= 8)? table->grid[8-(king->rank+i)][king->file+j-'a'] : NULL;
+			aux = (king->rank >= 1 && king->rank <= 8)? table->grid[8-king->rank][king->file-'a'] : NULL;
 			capture = (aux != NULL && aux->side == enemy_side);
 			flag = !(aux != NULL && !capture);
-			if(flag && king->rank+i >= 1 && king->rank+i <= 8){
-				table->grid[8-(king->rank+i)][king->file+j-'a'] = king;
-				table->grid[8-king->rank][king->file-'a'] = NULL;
-				if(!is_check(table))
-					enqueue(queue, create_move(king->name, king->rank, king->file, king->rank+i, king->file+j, capture, 0));
+			if(flag && king->rank >= 1 && king->rank <= 8){
 				table->grid[8-king->rank][king->file-'a'] = king;
-				table->grid[8-(king->rank+i)][king->file+j-'a'] = aux;
+				if(!is_check(table))
+					enqueue(queue, create_move(king->name, king->rank-i, king->file-j, king->rank, king->file, capture, 0));
+				table->grid[8-king->rank][king->file-'a'] = aux;
 			}
+			king->rank++;
 		}
+		king->rank -= 2;
+		king->file -= j;
+		table->grid[8-king->rank][king->file-'a'] = king;
 	}
 
 	//Castling right
@@ -1040,16 +1052,17 @@ void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
 		en_passant_file = 'i';
 	}
 
-	// rank = start+(mirror*pawn->rank);
-	// first check = pawn->file-mirror;
 	// Verifica a captura para a casa à esquerda
 	if(pawn->file-1 >= 'a' && pawn->rank+mirror <= 8 && pawn->rank+mirror >= 1){
-		aux = table->grid[8-(pawn->rank+mirror)][pawn->file-1-'a'];
+		special = (pawn->file-1 == en_passant_file && pawn->rank+mirror == en_passant_rank)? 'E' : 0;
+		flag = (special)? 1 : 0;
+		aux = table->grid[8-(pawn->rank+(mirror*(1-flag)))][pawn->file-1-'a'];
 		capture = (aux != NULL && aux->side == enemy_side);
+		if(flag && table->grid[8-(pawn->rank+mirror)][pawn->file-1-'a'] != NULL) capture = 0;
 		if(capture){
-			special = (pawn->file-1 == en_passant_file && pawn->rank+mirror == en_passant_rank)? 'E' : 0;
 			table->grid[8-(pawn->rank+mirror)][pawn->file-1-'a'] = pawn;
-			table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
+			table->grid[8-pawn->rank][pawn->file-'a'] = NULL;
+			if(flag) table->grid[8-(pawn->rank)][pawn->file-1-'a'] = NULL;
 			if(!is_check(table)){
 				// Se atingir o final enfileira todas as jogas possíveis
 				if(pawn->rank+mirror == finish){
@@ -1068,7 +1081,8 @@ void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
 				}
 			}
 			table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
-			table->grid[8-(pawn->rank+mirror)][pawn->file-1-'a'] = aux;
+			table->grid[8-(pawn->rank+mirror)][pawn->file-1-'a'] = NULL;
+			table->grid[8-(pawn->rank+(mirror*(1-flag)))][pawn->file-1-'a'] = aux;
 		}
 	}
 
@@ -1077,43 +1091,35 @@ void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
 	for(i = 0; i < 2; i++){
 		if(!j && pawn->rank == start && table->grid[8-(pawn->rank+mirror)][pawn->file-'a'] == NULL){
 			aux = table->grid[8-(pawn->rank+(mirror*2))][pawn->file-'a'];
-			capture = 0;
-			flag = !(aux != NULL && !capture);
+			flag = (aux == NULL);
 			if(flag){
 				table->grid[8-(pawn->rank+(mirror*2))][pawn->file-'a'] = pawn;
 				table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
 				if(!is_check(table))
-					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+(mirror*2), pawn->file,
-																capture, 0));
+					enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+(mirror*2), pawn->file, 0, 0));
 				table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
-				table->grid[8-(pawn->rank+(mirror*2))][pawn->file-'a'] = NULL;
+				table->grid[8-(pawn->rank+(mirror*2))][pawn->file-'a'] = aux;
 			}
 		}else if(j && pawn->rank+mirror <= 8 && pawn->rank+mirror >= 1){
 			aux = table->grid[8-(pawn->rank+mirror)][pawn->file-'a'];
-			capture = 0;
-			flag = !(aux != NULL && !capture);
+			flag = (aux == NULL);
 			if(flag){
 				table->grid[8-(pawn->rank+mirror)][pawn->file-'a'] = pawn;
 				table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
 				if(!is_check(table)){
 					// Se atingir o final enfileira todas as jogas possíveis
 					if(pawn->rank+mirror == finish){
-						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
-																	capture, 'N'));
-						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
-																	capture, 'B'));
-						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
-																	capture, 'R'));
-						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
-																	capture, 'Q'));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file, 0, 'N'));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file, 0, 'B'));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file, 0, 'R'));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file, 0, 'Q'));
 					}else{
 					// Caso contrário, só há uma jogada possível
-						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file,
-																capture, 0));
+						enqueue(queue, create_move(pawn->name, pawn->rank, pawn->file, pawn->rank+mirror, pawn->file, 0, 0));
 					}
 				}
 				table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
-				table->grid[8-(pawn->rank+mirror)][pawn->file-'a'] = NULL;
+				table->grid[8-(pawn->rank+mirror)][pawn->file-'a'] = aux;
 			}	
 		}
 		j = !j;
@@ -1121,12 +1127,16 @@ void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
 
 	// Verifica a captura de casa à direita
 	if(pawn->file+1 <= 'h' && pawn->rank+mirror <= 8 && pawn->rank+mirror >= 1){
-		aux = table->grid[8-(pawn->rank+mirror)][pawn->file-'a'+1];
+		special = (pawn->file+1 == en_passant_file && pawn->rank+mirror == en_passant_rank)? 'E' : 0;
+		flag = (special)? 1 : 0;
+		aux = table->grid[8-(pawn->rank+(mirror*(1-flag)))][pawn->file+1-'a'];
 		capture = (aux != NULL && aux->side == enemy_side);
+		if(flag && table->grid[8-(pawn->rank+mirror)][pawn->file+1-'a'] != NULL) capture = 0;
 		if(capture){
-			special = (pawn->file-1 == en_passant_file && pawn->rank+mirror == en_passant_rank)? 'E' : 0;
+			special = (pawn->file+1 == en_passant_file && pawn->rank+mirror == en_passant_rank)? 'E' : 0;
 			table->grid[8-(pawn->rank+mirror)][pawn->file-'a'+1] = pawn;
 			table->grid[8-(pawn->rank)][pawn->file-'a'] = NULL;
+			if(flag) table->grid[8-(pawn->rank)][pawn->file+1-'a'] = NULL;
 			if(!is_check(table)){
 				// Se atingir o final enfileira todas as jogas possíveis
 				if(pawn->rank+mirror == finish){
@@ -1145,7 +1155,8 @@ void move_pawn(TABLE *table, QUEUE *queue, PIECE *pawn){
 				}
 			}
 			table->grid[8-(pawn->rank)][pawn->file-'a'] = pawn;
-			table->grid[8-(pawn->rank+mirror)][pawn->file-'a'+1] = aux;
+			table->grid[8-(pawn->rank+mirror)][pawn->file+1-'a'] = NULL;
+			table->grid[8-(pawn->rank+(mirror*(1-flag)))][pawn->file+1-'a'] = aux;
 		}
 	}
 }
@@ -1431,7 +1442,8 @@ int delete_table(TABLE **table){
 		if((*table)->grid != NULL){
 			for(i = 0; i < 8; i++){
 				for(j = 0; j < 8; j++){
-					if((*table)->grid[i][j] != NULL) delete_piece(&(*table)->grid[i][j]);
+					if((*table)->grid[i][j] != NULL)
+						delete_piece(&(*table)->grid[i][j]);
 				}
 				free((*table)->grid[i]);
 			}
