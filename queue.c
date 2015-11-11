@@ -4,6 +4,7 @@ struct node{
 	CHESS_MOVE *move;
 	struct node *next;
 	struct node *previous;
+	int checked;
 };
 
 struct queue{
@@ -17,6 +18,7 @@ NODE *create_node(CHESS_MOVE *move){
 		new_node->move = move;
 		new_node->next = new_node;
 		new_node->previous = new_node;
+		new_node->checked = 0;
 	}else{
 		if(new_node != NULL){
 			free(new_node);
