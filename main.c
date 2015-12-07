@@ -11,6 +11,7 @@ int main(int argc, char *argv[]){
 	PIECE_LIST *list = create_piece_list(table);
 	QUEUE *queue = create_queue();
 	list_moves(table, queue, list);
+	print_queue(queue);
 //printf("-----------------------------------------------------\n");
 //	print_table(table);
 

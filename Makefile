@@ -26,9 +26,9 @@ debug: build
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./program < case4.in > test4.out
 	diff case4.out test4.out
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./program < case5.in > test5.out
-	#diff case5.out test5.out
+	diff case5.out test5.out
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./program < case6.in > test6.out
-	#diff case6.out test6.out
+	diff case6.out test6.out
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./program < case7.in > test7.out
 	diff case7.out test7.out
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./program < case8.in > test8.out

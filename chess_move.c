@@ -11,6 +11,10 @@ struct move{
 	char special;
 };
 
+void set_repeat(CHESS_MOVE *move, unsigned char repeat){
+	if(move != NULL) move->repeat = repeat;
+}
+
 CHESS_MOVE *create_move(char piece, int origin_rank, char origin_file, int destiny_rank, char destiny_file, unsigned char capture, char special){
 	CHESS_MOVE *new_move = malloc(sizeof(CHESS_MOVE));
 	if(new_move != NULL){
@@ -27,15 +31,18 @@ CHESS_MOVE *create_move(char piece, int origin_rank, char origin_file, int desti
 	return new_move;
 }
 
-// to do
 int compare_moves(CHESS_MOVE *move1, CHESS_MOVE *move2){
 	if(move1 != NULL && move2 != NULL){
-		int result = 0;
 		if(move1->destiny_rank == move2->destiny_rank && move1->destiny_file == move2->destiny_file){
+			if(move1->origin_file == move2->origin_file){
+				if(move1->origin_rank == move2->origin_rank) return 3;
+				return 2;
+			}
+			return 1;
 		}
-		return result;
+		return 0;
 	}
-	return INT_MIN;
+	return -1;
 }
 
 int swap_moves(CHESS_MOVE **move1, CHESS_MOVE **move2){
@@ -67,7 +74,7 @@ void print_move(CHESS_MOVE *move){
 		char *output = (char*)malloc(sizeof(char) * 8);
 		if(move->piece != 'P') output[i++] = move->piece;
 		if(move->repeat == 1 || move->repeat == 3 || move->piece == 'P') output[i++] = move->origin_file;
-		if(move->repeat == 2 || move->repeat == 3) output[i++] = move->origin_rank + '0';
+		if(move->repeat == 2 || (move->repeat == 3 && move->special == '\0')) output[i++] = move->origin_rank + '0';
 		if(move->capture) output[i++] = 'x';
 		output[i++] = move->destiny_file;
 		output[i++] = move->destiny_rank + '0';

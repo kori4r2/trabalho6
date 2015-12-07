@@ -35,6 +35,9 @@ void list_moves(TABLE*, QUEUE*, PIECE_LIST*);
 //
 TABLE *create_table(void);
 int read_table(FILE*, TABLE*);
+int move_piece(char*, TABLE*);
+char* get_fen(TABLE*);
+char *dupe_move(TABLE*);
 int is_check(TABLE*);
 int delete_table(TABLE**);
 
